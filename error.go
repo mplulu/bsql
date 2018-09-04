@@ -1,15 +1,15 @@
-package sql
+package bsql
 
 import (
 	"github.com/lib/pq"
 )
 
-func IgnoreUniqueViolation(err error) (filteredErr error) {
+func IgnoreAlreadyExist(err error) (filteredErr error) {
 	if err == nil {
 		return nil
 	}
 	if val, ok := err.(*pq.Error); ok {
-		if val.Code.Name() == "unique_violation" {
+		if val.Code.Name() == "unique_violation" || val.Code.Name() == "duplicate_table" || val.Code.Name() == "duplicate_column" {
 			return nil
 		}
 	}
