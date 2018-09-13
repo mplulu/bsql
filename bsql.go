@@ -44,6 +44,32 @@ func Insert(db QuerableRow, tableName string, dict map[string]interface{}) (id i
 	return id, err
 }
 
+func (db *DB) Insert(tableName string, dict map[string]interface{}) (id int64, err error) {
+	var keyBuffer bytes.Buffer
+	var valueBuffer bytes.Buffer
+	keyBuffer.WriteString(fmt.Sprintf("INSERT INTO %s (", tableName))
+	valueBuffer.WriteString(") VALUES (")
+	values := []interface{}{}
+	var counter int
+	for key, value := range dict {
+		keyBuffer.WriteString(key)
+		valueBuffer.WriteString(fmt.Sprintf("$%d", counter+1))
+		if counter != len(dict)-1 {
+			keyBuffer.WriteString(", ")
+			valueBuffer.WriteString(", ")
+		}
+		values = append(values, value)
+		counter++
+	}
+	valueBuffer.WriteString(") RETURNING id;")
+	keyBuffer.WriteString(valueBuffer.String())
+	err = db.QueryRow(keyBuffer.String(), values...).Scan(&id)
+	if err != nil {
+		return 0, err
+	}
+	return id, err
+}
+
 func (db *DB) QueryInt(queryString string, args ...interface{}) (value int, err error) {
 	var sqlValue sql.NullInt64
 	row := db.QueryRow(queryString, args...)
