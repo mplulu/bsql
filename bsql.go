@@ -179,10 +179,14 @@ func (db *DB) CreateDatabaseIgnoreIfExist(dbName, owner string) error {
 	return err
 }
 
-func ConnectPostgresqlDatabase(username, password, dbName string) (dbObject *DB, err error) {
-	db, err := sql.Open("postgres", fmt.Sprintf("postgres://%s:%s@127.0.0.1/%s?sslmode=disable",
+func ConnectPostgresqlDatabase(host, username, password, dbName string) (dbObject *DB, err error) {
+	if host == "" {
+		host = "127.0.0.1"
+	}
+	db, err := sql.Open("postgres", fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable",
 		username,
 		password,
+		host,
 		dbName))
 	if err != nil {
 		return nil, err
