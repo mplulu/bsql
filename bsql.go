@@ -74,6 +74,9 @@ func (db *DB) QueryInt(queryString string, args ...interface{}) (value int, err 
 	var sqlValue sql.NullInt64
 	row := db.QueryRow(queryString, args...)
 	err = row.Scan(&sqlValue)
+	if err == sql.ErrNoRows {
+		return 0, nil
+	}
 	return int(sqlValue.Int64), err
 }
 
@@ -81,6 +84,9 @@ func (db *DB) QueryInt64(queryString string, args ...interface{}) (value int64, 
 	var sqlValue sql.NullInt64
 	row := db.QueryRow(queryString, args...)
 	err = row.Scan(&sqlValue)
+	if err == sql.ErrNoRows {
+		return 0, nil
+	}
 	return sqlValue.Int64, err
 }
 
@@ -88,6 +94,9 @@ func (db *DB) QueryFloat64(queryString string, args ...interface{}) (value float
 	var sqlValue sql.NullFloat64
 	row := db.QueryRow(queryString, args...)
 	err = row.Scan(&sqlValue)
+	if err == sql.ErrNoRows {
+		return 0, nil
+	}
 	return sqlValue.Float64, err
 }
 
@@ -95,6 +104,9 @@ func (db *DB) QueryString(queryString string, args ...interface{}) (value string
 	var sqlValue sql.NullString
 	row := db.QueryRow(queryString, args...)
 	err = row.Scan(&sqlValue)
+	if err == sql.ErrNoRows {
+		return "", nil
+	}
 	return sqlValue.String, err
 }
 
