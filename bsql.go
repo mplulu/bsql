@@ -16,6 +16,7 @@ type DB struct {
 
 type QuerableRow interface {
 	QueryRow(query string, args ...interface{}) *sql.Row
+	Exec(query string, args ...interface{}) (sql.Result, error)
 }
 
 func Insert(db QuerableRow, tableName string, dict map[string]interface{}) (id int64, err error) {
@@ -45,29 +46,46 @@ func Insert(db QuerableRow, tableName string, dict map[string]interface{}) (id i
 }
 
 func (db *DB) Insert(tableName string, dict map[string]interface{}) (id int64, err error) {
-	var keyBuffer bytes.Buffer
-	var valueBuffer bytes.Buffer
-	keyBuffer.WriteString(fmt.Sprintf("INSERT INTO %s (", tableName))
-	valueBuffer.WriteString(") VALUES (")
+	return Insert(db, tableName, dict)
+}
+
+func Update(db QuerableRow, tableName string, conditionDict map[string]interface{}, dict map[string]interface{}) (err error) {
+	var updateBuffer bytes.Buffer
+	updateBuffer.WriteString(fmt.Sprintf("UPDATE %s SET ", tableName))
 	values := []interface{}{}
 	var counter int
+	var counterData int
 	for key, value := range dict {
-		keyBuffer.WriteString(key)
-		valueBuffer.WriteString(fmt.Sprintf("$%d", counter+1))
-		if counter != len(dict)-1 {
-			keyBuffer.WriteString(", ")
-			valueBuffer.WriteString(", ")
+		updateBuffer.WriteString(fmt.Sprintf("%s = $%d", key, counter+1))
+		if counterData != len(dict)-1 {
+			updateBuffer.WriteString(", ")
+		} else {
+			updateBuffer.WriteString(" ")
 		}
 		values = append(values, value)
 		counter++
+		counterData++
 	}
-	valueBuffer.WriteString(") RETURNING id;")
-	keyBuffer.WriteString(valueBuffer.String())
-	err = db.QueryRow(keyBuffer.String(), values...).Scan(&id)
+	updateBuffer.WriteString("WHERE ")
+	var counterCond int
+	for key, value := range conditionDict {
+		updateBuffer.WriteString(fmt.Sprintf("%s = $%d", key, counter+1))
+		if counterCond != len(conditionDict)-1 {
+			updateBuffer.WriteString(" AND ")
+		}
+		values = append(values, value)
+		counter++
+		counterCond++
+	}
+	_, err = db.Exec(updateBuffer.String(), values...)
 	if err != nil {
-		return 0, err
+		return err
 	}
-	return id, err
+	return nil
+}
+
+func (db *DB) Update(tableName string, conditionDict map[string]interface{}, dict map[string]interface{}) (err error) {
+	return Update(db, tableName, conditionDict, dict)
 }
 
 func (db *DB) QueryInt(queryString string, args ...interface{}) (value int, err error) {
