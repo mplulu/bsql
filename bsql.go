@@ -66,17 +66,21 @@ func Update(db QuerableRow, tableName string, conditionDict map[string]interface
 		counter++
 		counterData++
 	}
-	updateBuffer.WriteString("WHERE ")
-	var counterCond int
-	for key, value := range conditionDict {
-		updateBuffer.WriteString(fmt.Sprintf("%s = $%d", key, counter+1))
-		if counterCond != len(conditionDict)-1 {
-			updateBuffer.WriteString(" AND ")
+
+	if len(conditionDict) > 0 {
+		updateBuffer.WriteString("WHERE ")
+		var counterCond int
+		for key, value := range conditionDict {
+			updateBuffer.WriteString(fmt.Sprintf("%s = $%d", key, counter+1))
+			if counterCond != len(conditionDict)-1 {
+				updateBuffer.WriteString(" AND ")
+			}
+			values = append(values, value)
+			counter++
+			counterCond++
 		}
-		values = append(values, value)
-		counter++
-		counterCond++
 	}
+
 	_, err = db.Exec(updateBuffer.String(), values...)
 	if err != nil {
 		return err
