@@ -15,6 +15,7 @@ type DB struct {
 }
 
 type QuerableRow interface {
+	Query(query string, args ...interface{}) (*sql.Rows, error)
 	QueryRow(query string, args ...interface{}) *sql.Row
 	Exec(query string, args ...interface{}) (sql.Result, error)
 }
@@ -45,8 +46,38 @@ func Insert(db QuerableRow, tableName string, dict map[string]interface{}) (id i
 	return id, err
 }
 
+func InsertNoId(db QuerableRow, tableName string, dict map[string]interface{}) (err error) {
+	var keyBuffer bytes.Buffer
+	var valueBuffer bytes.Buffer
+	keyBuffer.WriteString(fmt.Sprintf("INSERT INTO %s (", tableName))
+	valueBuffer.WriteString(") VALUES (")
+	values := []interface{}{}
+	var counter int
+	for key, value := range dict {
+		keyBuffer.WriteString(key)
+		valueBuffer.WriteString(fmt.Sprintf("$%d", counter+1))
+		if counter != len(dict)-1 {
+			keyBuffer.WriteString(", ")
+			valueBuffer.WriteString(", ")
+		}
+		values = append(values, value)
+		counter++
+	}
+	valueBuffer.WriteString(");")
+	keyBuffer.WriteString(valueBuffer.String())
+	_, err = db.Exec(keyBuffer.String(), values...)
+	if err != nil {
+		return err
+	}
+	return err
+}
+
 func (db *DB) Insert(tableName string, dict map[string]interface{}) (id int64, err error) {
 	return Insert(db, tableName, dict)
+}
+
+func (db *DB) InsertNoId(tableName string, dict map[string]interface{}) (err error) {
+	return InsertNoId(db, tableName, dict)
 }
 
 func Update(db QuerableRow, tableName string, conditionDict map[string]interface{}, dict map[string]interface{}) (err error) {
