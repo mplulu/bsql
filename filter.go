@@ -77,10 +77,10 @@ func GenerateWhereClause(list []Conditionable) (string, []interface{}) {
 	return whereClause, values
 }
 
-func GenerateWhereClauseNoWHERE(list []Conditionable) (string, []interface{}) {
+func GenerateWhereClauseStartingIndex(list []Conditionable, startingIndex int) (string, []interface{}) {
 	if len(list) == 0 {
 		return "", []interface{}{}
 	}
-	whereClause, values := generateWhereClause(list, 1)
+	whereClause, values := generateWhereClause(list, startingIndex)
 	return whereClause, values
 }
