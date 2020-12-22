@@ -76,3 +76,11 @@ func GenerateWhereClause(list []Conditionable) (string, []interface{}) {
 	whereClause = fmt.Sprintf("\n WHERE %s", whereClause)
 	return whereClause, values
 }
+
+func GenerateWhereClauseNoWHERE(list []Conditionable) (string, []interface{}) {
+	if len(list) == 0 {
+		return "", []interface{}{}
+	}
+	whereClause, values := generateWhereClause(list, 1)
+	return whereClause, values
+}
