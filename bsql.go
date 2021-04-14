@@ -248,11 +248,19 @@ func ConnectPostgresqlDatabase(host, username, password, dbName string) (dbObjec
 	if host == "" {
 		host = "127.0.0.1"
 	}
-	db, err := sql.Open("postgres", fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable",
-		username,
-		password,
-		host,
-		dbName))
+	var db *sql.DB
+	if password == "" {
+		db, err = sql.Open("postgres", fmt.Sprintf("postgres://%s@%s/%s?sslmode=disable",
+			username,
+			host,
+			dbName))
+	} else {
+		db, err = sql.Open("postgres", fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable",
+			username,
+			password,
+			host,
+			dbName))
+	}
 	if err != nil {
 		return nil, err
 	}
